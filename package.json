@@ -1,7 +1,10 @@
 {
-  "name": "my-v0-project",
+  "name": "dau2025",
   "version": "0.1.0",
   "private": true,
+  "description": "DAU2025 Project",
+  "author": "roor48",
+  "license": "MIT",
   "scripts": {
     "build": "next build",
     "dev": "next dev",
