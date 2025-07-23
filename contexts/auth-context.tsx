@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, type ReactNode } from "react"
 
 interface User {
-  id: string
+  id: number
   name: string
   email: string
 }
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const userData = await response.json()
       setUser({
-        id: userData.email, // email을 id로 사용
+        id: userData.id,
         name: userData.name,
         email: userData.email,
       })
@@ -66,9 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     try {
       const response = await fetch("http://localhost:8080/user/signUp", {
-        method: 'post',
+        method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name,
@@ -78,18 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }),
       })
 
-      const responseBody = await response.text()
-
       if (!response.ok) {
-        // 서버에서 보낸 응답 본문이 "failure: email exists" 인지 확인
-        if (responseBody === "failure: email exists") {
-          throw new Error("이미 존재하는 이메일입니다.")
-        } else if (responseBody === "failure: passwords don't match") {
-          throw new Error("비밀번호가 일치하지 않습니다.")
-        } else {
-          // 그 외의 실패 응답인 경우 일반적인 실패 메시지
-          throw new Error("회원가입에 실패했습니다.")
-        }
+        throw new Error("회원가입에 실패했습니다.")
       }
 
       // 회원가입 성공 후 자동 로그인
