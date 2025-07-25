@@ -41,7 +41,6 @@ interface ChallengeHistory {
   challengeId: number
   userId: number
   date: string
-  completed: boolean
 }
 
 const challenges: Challenge[] = [
@@ -97,6 +96,7 @@ export default function ChallengePage() {
   const [selectedChallengeId, setSelectedChallengeId] = useState<number | null>(null)
   const [completedTodayChallenge, setCompletedTodayChallenge] = useState<TodayChallenge | null>(null)
   const [isChallengeLoading, setIsChallengeLoading] = useState(false)
+  const [isCompletingChallenge, setIsCompletingChallenge] = useState(false)
 
   useEffect(() => {
     if (user?.id) {
@@ -104,6 +104,21 @@ export default function ChallengePage() {
       fetchChallengeHistory()
     }
   }, [user])
+
+  useEffect(() => {
+    if (user?.id && todayChallenges.length > 0) {
+      // 오늘 완료한 챌린지가 있는지 확인
+      const today = getTodayDateString()
+      const todayCompleted = challengeHistory.find((h: ChallengeHistory) => h.date === today)
+      if (todayCompleted) {
+        const completedChallenge = todayChallenges.find((c) => c.id === todayCompleted.challengeId)
+        if (completedChallenge) {
+          setCompletedTodayChallenge(completedChallenge)
+          setSelectedChallengeId(completedChallenge.id)
+        }
+      }
+    }
+  }, [user, todayChallenges, challengeHistory])
 
   const fetchTodayChallenges = async () => {
     setIsChallengeLoading(true)
@@ -150,7 +165,7 @@ export default function ChallengePage() {
 
       // 오늘 완료한 챌린지가 있는지 확인
       const today = getTodayDateString()
-      const todayCompleted = historyData.find((h: ChallengeHistory) => h.date === today && h.completed)
+      const todayCompleted = historyData.find((h: ChallengeHistory) => h.date === today)
       if (todayCompleted) {
         const completedChallenge = todayChallenges.find((c) => c.id === todayCompleted.challengeId)
         if (completedChallenge) {
@@ -165,17 +180,24 @@ export default function ChallengePage() {
     }
   }
 
+  // 챌린지 완료 후 히스토리 다시 불러오기
+  const refreshAfterCompletion = async () => {
+    if (user?.id) {
+      await fetchChallengeHistory()
+    }
+  }
+
   const getTodayDateString = () => {
     const today = new Date()
     const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, "0") // getMonth()는 0부터 시작
+    const month = String(today.getMonth() + 1).padStart(2, "0")
     const day = String(today.getDate()).padStart(2, "0")
     return `${year}-${month}-${day}`
   }
 
   const getDateString = (date: Date) => {
     const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, "0") // getMonth()는 0부터 시작
+    const month = String(date.getMonth() + 1).padStart(2, "0")
     const day = String(date.getDate()).padStart(2, "0")
     return `${year}-${month}-${day}`
   }
@@ -183,7 +205,7 @@ export default function ChallengePage() {
   const isChallengeCompleted = (date: string, challengeId?: string) => {
     if (!challengeId) return false
     const challengeIdNum = Number.parseInt(challengeId)
-    return challengeHistory.some((h) => h.date === date && h.challengeId === challengeIdNum && h.completed)
+    return challengeHistory.some((h) => h.date === date && h.challengeId === challengeIdNum)
   }
 
   const completeChallenge = (challengeId: string) => {
@@ -194,7 +216,6 @@ export default function ChallengePage() {
       challengeId: Number.parseInt(challengeId),
       userId: user?.id || 0,
       date: today,
-      completed: true,
     }
 
     setChallengeHistory((prev) => [
@@ -205,7 +226,7 @@ export default function ChallengePage() {
 
   const isTodayCompleted = () => {
     const today = getTodayDateString()
-    return challengeHistory.some((h) => h.date === today && h.completed)
+    return challengeHistory.some((h) => h.date === today)
   }
 
   const completeSelectedChallenge = async () => {
@@ -214,32 +235,81 @@ export default function ChallengePage() {
     const selectedChallenge = todayChallenges.find((c) => c.id === selectedChallengeId)
     if (!selectedChallenge) return
 
-    // 실제로는 서버에 완료 요청을 보내야 하지만, 여기서는 로컬 상태만 업데이트
-    const today = getTodayDateString()
-    const newHistory: ChallengeHistory = {
-      challengeId: selectedChallengeId,
-      userId: user.id,
-      date: today,
-      completed: true,
-    }
+    setIsCompletingChallenge(true)
+    try {
+      // 서버에 챌린지 완료 요청 보내기
+      const response = await fetch("http://localhost:8080/api/v1/challenge/set/history", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          challengeId: selectedChallengeId,
+          userId: Number(user.id),
+          date: getTodayDateString(),
+        }),
+      })
 
-    setChallengeHistory((prev) => [...prev, newHistory])
-    setCompletedTodayChallenge(selectedChallenge)
+      if (!response.ok) {
+        throw new Error("챌린지 완료 요청이 실패했습니다.")
+      }
+
+      // 성공적으로 완료되면 히스토리 새로고침
+      await refreshAfterCompletion()
+      setCompletedTodayChallenge(selectedChallenge)
+
+      console.log("챌린지가 성공적으로 완료되었습니다!")
+    } catch (error) {
+      console.error("Challenge completion error:", error)
+      // 에러 처리 - 사용자에게 알림을 보여줄 수 있습니다
+      alert("챌린지 완료 중 오류가 발생했습니다. 다시 시도해주세요.")
+    } finally {
+      setIsCompletingChallenge(false)
+    }
   }
 
   const getTotalPoints = () => {
     return challengeHistory.reduce((total, history) => {
-      if (history.completed) {
-        const challenge = todayChallenges.find((c) => c.id === history.challengeId)
-        return total + (challenge?.point || 0)
-      }
-      return total
+      const challenge = todayChallenges.find((c) => c.id === history.challengeId)
+      return total + (challenge?.point || 0)
     }, 0)
   }
 
   const getCompletedDaysCount = () => {
-    const uniqueDates = new Set(challengeHistory.filter((h) => h.completed).map((h) => h.date))
+    const uniqueDates = new Set(challengeHistory.map((h) => h.date))
     return uniqueDates.size
+  }
+
+  const getConsecutiveDays = () => {
+    if (challengeHistory.length === 0) return 0
+
+    // 날짜를 정렬하여 연속 날짜 계산
+    const sortedDates = [...new Set(challengeHistory.map((h) => h.date))].sort()
+
+    const consecutiveDays = 0
+    let currentStreak = 0
+    const today = getTodayDateString()
+
+    // 오늘부터 역순으로 확인
+    for (let i = 0; i < 100; i++) {
+      // 최대 100일까지만 확인
+      const checkDate = new Date()
+      checkDate.setDate(checkDate.getDate() - i)
+      const checkDateString = getDateString(checkDate)
+
+      if (sortedDates.includes(checkDateString)) {
+        currentStreak++
+      } else {
+        // 오늘이 아닌 날에 빠진 날이 있으면 연속 종료
+        if (i === 0) {
+          // 오늘 완료하지 않았으면 어제부터 확인
+          continue
+        }
+        break
+      }
+    }
+
+    return currentStreak
   }
 
   const getDifficultyColor = (difficulty: string) => {
@@ -339,7 +409,7 @@ export default function ChallengePage() {
                 <Flame className="h-4 w-4 text-orange-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">0일</div>
+                <div className="text-2xl font-bold">{getConsecutiveDays()}일</div>
               </CardContent>
             </Card>
           </div>
@@ -352,37 +422,7 @@ export default function ChallengePage() {
                 오늘의 챌린지
               </h2>
 
-              {isTodayCompleted() && completedTodayChallenge ? (
-                  <Card className="mb-6 border-green-200 bg-green-50">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-xl text-green-800">오늘 챌린지 완료!</CardTitle>
-                          <CardDescription className="mt-2 text-green-700">
-                            {completedTodayChallenge.description}
-                          </CardDescription>
-                        </div>
-                        <Badge className={getDifficultyColor(completedTodayChallenge.difficulty)}>
-                          {getDifficultyText(completedTodayChallenge.difficulty)}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-green-600">획득 포인트:</span>
-                          <Badge variant="outline" className="border-green-300 text-green-700">
-                            {completedTodayChallenge.point}P
-                          </Badge>
-                        </div>
-                        <Button disabled className="bg-green-500">
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          완료됨
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-              ) : (
+              {!isTodayCompleted() ? (
                   <Card className="mb-6">
                     <CardHeader>
                       <CardTitle className="text-xl">오늘의 챌린지를 선택하세요</CardTitle>
@@ -425,10 +465,64 @@ export default function ChallengePage() {
                         ))}
                       </div>
 
-                      <Button onClick={completeSelectedChallenge} disabled={!selectedChallengeId} className="w-full">
+                      <Button
+                          onClick={completeSelectedChallenge}
+                          disabled={!selectedChallengeId || isCompletingChallenge}
+                          className="w-full"
+                      >
                         <Clock className="h-4 w-4 mr-2" />
-                        선택한 챌린지 완료하기
+                        {isCompletingChallenge ? "완료 중..." : "선택한 챌린지 완료하기"}
                       </Button>
+                    </CardContent>
+                  </Card>
+              ) : (
+                  <Card className="mb-6">
+                    <CardHeader>
+                      <CardTitle className="text-xl">오늘의 챌린지</CardTitle>
+                      <CardDescription>
+                        오늘은 이미 챌린지를 완료했습니다. 내일 새로운 챌린지에 도전해보세요!
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {todayChallenges.map((challenge) => {
+                          const isCompleted = challengeHistory.some(
+                              (h) => h.date === getTodayDateString() && h.challengeId === challenge.id,
+                          )
+
+                          return (
+                              <div
+                                  key={challenge.id}
+                                  className={`p-4 border rounded-lg ${
+                                      isCompleted ? "border-green-200 bg-green-50" : "border-gray-200 bg-gray-50 opacity-60"
+                                  }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1">
+                                    <h4 className="font-medium">{challenge.title}</h4>
+                                    <p className="text-sm text-gray-600 mt-1">{challenge.description}</p>
+                                    <div className="flex items-center gap-2 mt-2">
+                                      <Badge className={`text-xs ${getDifficultyColor(challenge.difficulty)}`}>
+                                        {getDifficultyText(challenge.difficulty)}
+                                      </Badge>
+                                      <span className="text-xs text-gray-500">{challenge.point}P</span>
+                                    </div>
+                                  </div>
+                                  <div className="ml-4">
+                                    {isCompleted ? (
+                                        <div className="flex items-center gap-2">
+                                          <CheckCircle className="h-5 w-5 text-green-500" />
+                                          <span className="text-sm font-medium text-green-600">완료됨</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-sm text-gray-400">미완료</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                          )
+                        })}
+                      </div>
                     </CardContent>
                   </Card>
               )}
@@ -504,7 +598,7 @@ export default function ChallengePage() {
                         modifiers={{
                           completed: (date) => {
                             const dateString = getDateString(date)
-                            return challengeHistory.some((h) => h.date === dateString && h.completed)
+                            return challengeHistory.some((h) => h.date === dateString)
                           },
                         }}
                         modifiersStyles={{
@@ -530,11 +624,11 @@ export default function ChallengePage() {
                       })}
                     </h4>
 
-                    {challengeHistory.filter((h) => h.date === getDateString(selectedDate) && h.completed).length > 0 ? (
+                    {challengeHistory.filter((h) => h.date === getDateString(selectedDate)).length > 0 ? (
                         <div className="space-y-2">
                           <p className="text-sm text-green-600 font-medium">✅ 챌린지 완료!</p>
                           {challengeHistory
-                              .filter((h) => h.date === getDateString(selectedDate) && h.completed)
+                              .filter((h) => h.date === getDateString(selectedDate))
                               .map((history) => {
                                 const challenge = todayChallenges.find((c) => c.id === history.challengeId)
                                 return challenge ? (
