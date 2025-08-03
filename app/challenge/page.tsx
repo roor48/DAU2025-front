@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Calendar } from "@/components/ui/calendar"
@@ -16,8 +22,6 @@ import {
   Target,
   Flame,
   Award,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react"
 
 interface Challenge {
@@ -29,291 +33,245 @@ interface Challenge {
   category: string
 }
 
-interface TodayChallenge {
-  id: number
-  title: string
-  description: string
-  point: number
-  difficulty: "Easy" | "Medium" | "Hard"
-}
-
-interface ChallengeHistory {
-  challengeId: number
-  userId: number
+interface ChallengeCompletion {
   date: string
+  challengeId: string
+  completed: boolean
 }
 
 const challenges: Challenge[] = [
   {
     id: "1",
-    title: "플라스틱 용기 5개 분리배출하기",
+    title: "플라스틱 용기 분리배출하기",
     description: "오늘 사용한 플라스틱 용기를 깨끗이 씻어서 분리배출해보세요.",
-    points: 10,
+    points: 5,
     difficulty: "easy",
     category: "분리배출",
   },
   {
     id: "2",
-    title: "일회용품 사용 줄이기",
-    description: "오늘 하루 일회용 컵이나 빨대 사용을 피해보세요.",
-    points: 15,
-    difficulty: "medium",
+    title: "대중교통 이용하기",
+    description: "자동차 대신 버스, 지하철, 도보, 자전거 등 친환경 교통수단 이용하세요.",
+    points: 5,
+    difficulty: "easy",
     category: "생활습관",
   },
   {
     id: "3",
-    title: "재활용품 분류 퀴즈 풀기",
-    description: "재활용품 분류에 대한 퀴즈 5문제를 모두 맞춰보세요.",
-    points: 20,
-    difficulty: "hard",
-    category: "학습",
+    title: "텀블러 사용하기",
+    description: "오늘 하루 카페나 외출 시 일회용 컵 대신 텀블러를 사용하세요.",
+    points: 5,
+    difficulty: "easy",
+    category: "생활습관",
   },
   {
     id: "4",
     title: "종이 재활용하기",
     description: "집에 있는 신문지나 박스를 정리해서 분리배출해보세요.",
-    points: 10,
+    points: 5,
     difficulty: "easy",
     category: "분리배출",
   },
   {
     id: "5",
-    title: "친환경 제품 사용하기",
-    description: "오늘 하루 친환경 세제나 제품을 사용해보세요.",
-    points: 15,
+    title: "전기제품 플러그 뽑기",
+    description: "불필요한 플러그는 잠시 뽑아보세요",
+    points: 5,
+    difficulty: "easy",
+    category: "생활습관",
+  },
+  {
+    id: "15",
+    title: "음식 남기지 않기",
+    description: "식사량을 조절해 음식물 쓰레기를 줄여보세요.",
+    points: 5,
+    difficulty: "easy",
+    category: "생활습관",
+  },
+  {
+    id: "6",
+    title: "일회용품 금지",
+    description: "오늘 하루 일회용 컵이나 빨대 사용을 피해보세요.",
+    points: 10,
     difficulty: "medium",
     category: "생활습관",
   },
+  {
+    id: "7",
+    title: "친환경 제품 사용하기",
+    description: "오늘 하루 친환경 세제나 제품을 사용해보세요.",
+    points: 10,
+    difficulty: "medium",
+    category: "생활습관",
+  },
+  {
+    id: "8",
+    title: "조명 끄기",
+    description: "방을 비울 땐 조명 꺼서 대기전력을 줄여보세요.",
+    points: 10,
+    difficulty: "medium",
+    category: "생활습관",
+  },
+  {
+    id: "9",
+    title: "장바구니 들고 장보기",
+    description: "비닐봉투 대신 장바구니 챙겨서 사용해보세요.",
+    points: 10,
+    difficulty: "medium",
+    category: "생활습관",
+  },
+  {
+    id: "10",
+    title: "손수건 사용하기",
+    description: "공공장소나 화장실에서 손수건을 사용해보세요.",
+    points: 10,
+    difficulty: "medium",
+    category: "생활습관",
+  },
+  {
+    id: "11",
+    title: "헌 옷 기부하기",
+    description: "집에 있는 입지 않는 옷은 기부처에 보내보세요.",
+    points: 20,
+    difficulty: "hard",
+    category: "분리배출",
+  },
+  {
+    id: "12",
+    title: "업사이클링 DIY 만들기",
+    description: "재활용품을 활용해 나만의 물건 만들어보세요. (예: 페트병 화분)",
+    points: 20,
+    difficulty: "hard",
+    category: "분리배출",
+  },
+  {
+    id: "13",
+    title: "플로깅 하기",
+    description: "조깅하면서 쓰레기를 주워보세요.",
+    points: 20,
+    difficulty: "hard",
+    category: "생활습관",
+  },
+  {
+    id: "14",
+    title: "재사용 용기 챙기기",
+    description: "식당이나 포장 주문 시 본인 용기를 사용해보세요.",
+    points: 20,
+    difficulty: "hard",
+    category: "생활습관",
+  },
+  // 추가 챌린지 할 거 추천
 ]
+
+// 오늘 날짜 YYYY-MM-DD 포맷 함수
+const getTodayDateString = () => new Date().toISOString().split("T")[0]
+
+// 난수 생성 함수 (날짜 기반 시드형 랜덤) — 날짜별 고정 결과 보장
+function getSeededRandom(seed: string) {
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash)
+    hash |= 0 // 32bit 정수 변환
+  }
+  return () => {
+    hash ^= hash << 13
+    hash ^= hash >> 17
+    hash ^= hash << 5
+    return (hash >>> 0) / 0xffffffff
+  }
+}
 
 export default function ChallengePage() {
   const { user } = useAuth()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [challengeHistory, setChallengeHistory] = useState<ChallengeHistory[]>([])
-  const [todayChallenge, setTodayChallenge] = useState<Challenge>()
-  const [isLoading, setIsLoading] = useState(false)
-  const [todayChallenges, setTodayChallenges] = useState<TodayChallenge[]>([])
-  const [selectedChallengeId, setSelectedChallengeId] = useState<number | null>(null)
-  const [completedTodayChallenge, setCompletedTodayChallenge] = useState<TodayChallenge | null>(null)
-  const [isChallengeLoading, setIsChallengeLoading] = useState(false)
-  const [isCompletingChallenge, setIsCompletingChallenge] = useState(false)
+  const [completions, setCompletions] = useState<ChallengeCompletion[]>([])
+  // 오늘 날짜에 랜덤으로 난이도별 하나씩 뽑힌 3개 미션
+  const [todayChallenges, setTodayChallenges] = useState<Challenge[]>([])
+  // 사용자가 선택한 미션 ID (오늘 날짜 기준)
+  const [selectedChallengeId, setSelectedChallengeId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (user?.id) {
-      fetchTodayChallenges()
-      fetchChallengeHistory()
-    }
-  }, [user])
-
-  useEffect(() => {
-    if (user?.id && todayChallenges.length > 0) {
-      // 오늘 완료한 챌린지가 있는지 확인
-      const today = getTodayDateString()
-      const todayCompleted = challengeHistory.find((h: ChallengeHistory) => h.date === today)
-      if (todayCompleted) {
-        const completedChallenge = todayChallenges.find((c) => c.id === todayCompleted.challengeId)
-        if (completedChallenge) {
-          setCompletedTodayChallenge(completedChallenge)
-          setSelectedChallengeId(completedChallenge.id)
-        }
-      }
-    }
-  }, [user, todayChallenges, challengeHistory])
-
-  const fetchTodayChallenges = async () => {
-    setIsChallengeLoading(true)
-    try {
-      const response = await fetch("http://localhost:8080/api/v1/challenge/todayChallenge", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error("오늘의 챌린지를 가져오는데 실패했습니다.")
-      }
-
-      const challengesData = await response.json()
-      setTodayChallenges(challengesData)
-    } catch (error) {
-      console.error("Today challenges fetch error:", error)
-    } finally {
-      setIsChallengeLoading(false)
-    }
-  }
-
-  const fetchChallengeHistory = async () => {
-    if (!user?.id) return
-
-    setIsLoading(true)
-    try {
-      const response = await fetch("http://localhost:8080/api/v1/challenge/history", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(Number(user.id)),
-      })
-
-      if (!response.ok) {
-        throw new Error("챌린지 히스토리를 가져오는데 실패했습니다.")
-      }
-
-      const historyData = await response.json()
-      setChallengeHistory(historyData)
-
-      // 오늘 완료한 챌린지가 있는지 확인
-      const today = getTodayDateString()
-      const todayCompleted = historyData.find((h: ChallengeHistory) => h.date === today)
-      if (todayCompleted) {
-        const completedChallenge = todayChallenges.find((c) => c.id === todayCompleted.challengeId)
-        if (completedChallenge) {
-          setCompletedTodayChallenge(completedChallenge)
-          setSelectedChallengeId(completedChallenge.id)
-        }
-      }
-    } catch (error) {
-      console.error("Challenge history fetch error:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // 챌린지 완료 후 히스토리 다시 불러오기
-  const refreshAfterCompletion = async () => {
-    if (user?.id) {
-      await fetchChallengeHistory()
-    }
-  }
-
-  const getTodayDateString = () => {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, "0")
-    const day = String(today.getDate()).padStart(2, "0")
-    return `${year}-${month}-${day}`
-  }
-
-  const getDateString = (date: Date) => {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, "0")
-    const day = String(date.getDate()).padStart(2, "0")
-    return `${year}-${month}-${day}`
-  }
-
-  const isChallengeCompleted = (date: string, challengeId?: string) => {
-    if (!challengeId) return false
-    const challengeIdNum = Number.parseInt(challengeId)
-    return challengeHistory.some((h) => h.date === date && h.challengeId === challengeIdNum)
-  }
-
-  const completeChallenge = (challengeId: string) => {
-    // 실제 구현에서는 서버에 완료 요청을 보내야 함
-    // 여기서는 임시로 로컬 상태만 업데이트
+    // 오늘 날짜 기준으로 랜덤하지만 고정된 3개 (쉬움, 보통, 어려움 각각 하나씩)
     const today = getTodayDateString()
-    const newHistory: ChallengeHistory = {
-      challengeId: Number.parseInt(challengeId),
-      userId: user?.id || 0,
-      date: today,
-    }
+    const rand = getSeededRandom(today)
 
-    setChallengeHistory((prev) => [
-      ...prev.filter((h) => !(h.date === today && h.challengeId === Number.parseInt(challengeId))),
-      newHistory,
-    ])
+    const easyList = challenges.filter((c) => c.difficulty === "easy")
+    const mediumList = challenges.filter((c) => c.difficulty === "medium")
+    const hardList = challenges.filter((c) => c.difficulty === "hard")
+
+    const pickOne = (list: Challenge[]) =>
+      list.length > 0 ? list[Math.floor(rand() * list.length)] : null
+
+    const selected = [pickOne(easyList), pickOne(mediumList), pickOne(hardList)].filter(
+      Boolean
+    ) as Challenge[]
+    setTodayChallenges(selected)
+
+    // 로컬스토리지에서 완료 기록 불러오기
+    const savedCompletions = localStorage.getItem("challenge-completions")
+    if (savedCompletions) setCompletions(JSON.parse(savedCompletions))
+
+    // 오늘 날짜 기준 선택 미션 아이디 불러오기
+    const savedSelected = localStorage.getItem(`selected-challenge-${today}`)
+    if (savedSelected) setSelectedChallengeId(savedSelected)
+  }, [])
+
+  // 날짜별 string 변환
+  const getDateString = (date: Date) => date.toISOString().split("T")[0]
+
+  // 특정 날짜, 챌린지 id의 완료 여부 확인
+  const isChallengeCompleted = (date: string, challengeId: string) => {
+    return completions.some(
+      (c) => c.date === date && c.challengeId === challengeId && c.completed
+    )
   }
 
-  const isTodayCompleted = () => {
+  // 미션 선택 시 저장
+  const selectChallenge = (challengeId: string) => {
     const today = getTodayDateString()
-    return challengeHistory.some((h) => h.date === today)
+    setSelectedChallengeId(challengeId)
+    localStorage.setItem(`selected-challenge-${today}`, challengeId)
+
+  // 선택된 미션만 오늘 미션 리스트로 설정
+    const selected = todayChallenges.find((c) => c.id === challengeId)
+    if (selected) setTodayChallenges([selected])
+  } 
+
+  // 완료하기 버튼 클릭 시 완료 처리
+  const completeSelectedChallenge = () => {
+    if (!selectedChallengeId) return
+    const today = getTodayDateString()
+    // 중복 완료 제거 후 새 완료 저장
+    const updated = [
+      ...completions.filter(
+        (c) => !(c.date === today && c.challengeId === selectedChallengeId)
+      ),
+      { date: today, challengeId: selectedChallengeId, completed: true },
+    ]
+    setCompletions(updated)
+    localStorage.setItem("challenge-completions", JSON.stringify(updated))
   }
 
-  const completeSelectedChallenge = async () => {
-    if (!selectedChallengeId || !user?.id || isTodayCompleted()) return
-
-    const selectedChallenge = todayChallenges.find((c) => c.id === selectedChallengeId)
-    if (!selectedChallenge) return
-
-    setIsCompletingChallenge(true)
-    try {
-      // 서버에 챌린지 완료 요청 보내기
-      const response = await fetch("http://localhost:8080/api/v1/challenge/set/history", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          challengeId: selectedChallengeId,
-          userId: Number(user.id),
-          date: getTodayDateString(),
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("챌린지 완료 요청이 실패했습니다.")
-      }
-
-      // 성공적으로 완료되면 히스토리 새로고침
-      await refreshAfterCompletion()
-      setCompletedTodayChallenge(selectedChallenge)
-
-      console.log("챌린지가 성공적으로 완료되었습니다!")
-    } catch (error) {
-      console.error("Challenge completion error:", error)
-      // 에러 처리 - 사용자에게 알림을 보여줄 수 있습니다
-      alert("챌린지 완료 중 오류가 발생했습니다. 다시 시도해주세요.")
-    } finally {
-      setIsCompletingChallenge(false)
-    }
-  }
-
+  // 총 포인트 계산
   const getTotalPoints = () => {
-    return challengeHistory.reduce((total, history) => {
-      const challenge = todayChallenges.find((c) => c.id === history.challengeId)
-      return total + (challenge?.point || 0)
+    return completions.reduce((total, completion) => {
+      if (completion.completed) {
+        const challenge = challenges.find((c) => c.id === completion.challengeId)
+        return total + (challenge?.points || 0)
+      }
+      return total
     }, 0)
   }
 
+  // 완료한 날짜 수 계산
   const getCompletedDaysCount = () => {
-    const uniqueDates = new Set(challengeHistory.map((h) => h.date))
+    const uniqueDates = new Set(completions.filter((c) => c.completed).map((c) => c.date))
     return uniqueDates.size
   }
 
-  const getConsecutiveDays = () => {
-    if (challengeHistory.length === 0) return 0
-
-    // 날짜를 정렬하여 연속 날짜 계산
-    const sortedDates = [...new Set(challengeHistory.map((h) => h.date))].sort()
-
-    const consecutiveDays = 0
-    let currentStreak = 0
-    const today = getTodayDateString()
-
-    // 오늘부터 역순으로 확인
-    for (let i = 0; i < 100; i++) {
-      // 최대 100일까지만 확인
-      const checkDate = new Date()
-      checkDate.setDate(checkDate.getDate() - i)
-      const checkDateString = getDateString(checkDate)
-
-      if (sortedDates.includes(checkDateString)) {
-        currentStreak++
-      } else {
-        // 오늘이 아닌 날에 빠진 날이 있으면 연속 종료
-        if (i === 0) {
-          // 오늘 완료하지 않았으면 어제부터 확인
-          continue
-        }
-        break
-      }
-    }
-
-    return currentStreak
-  }
-
+  // 난이도에 따른 배경/텍스트 색상 클래스
   const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty.toLowerCase()) {
+    switch (difficulty) {
       case "easy":
         return "bg-green-100 text-green-800"
       case "medium":
@@ -325,8 +283,9 @@ export default function ChallengePage() {
     }
   }
 
+  // 난이도 한글 텍스트
   const getDifficultyText = (difficulty: string) => {
-    switch (difficulty.toLowerCase()) {
+    switch (difficulty) {
       case "easy":
         return "쉬움"
       case "medium":
@@ -340,313 +299,211 @@ export default function ChallengePage() {
 
   if (!user) {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
-          <Card className="max-w-md">
-            <CardHeader className="text-center">
-              <Trophy className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-              <CardTitle>로그인이 필요합니다</CardTitle>
-              <CardDescription>챌린지에 참여하려면 먼저 로그인해주세요.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href="/">
-                <Button className="w-full">홈으로 돌아가기</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardHeader className="text-center">
+            <Trophy className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+            <CardTitle>로그인이 필요합니다</CardTitle>
+            <CardDescription>챌린지에 참여하려면 먼저 로그인해주세요.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/">
+              <Button className="w-full">홈으로 돌아가기</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
   return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-        <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="flex items-center gap-4 mb-8">
-            <Link href="/">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                홈으로
-              </Button>
-            </Link>
-            <div className="flex items-center gap-2">
-              <Trophy className="h-8 w-8 text-yellow-500" />
-              <h1 className="text-4xl font-bold text-gray-800">일일 챌린지</h1>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <Link href="/">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              홈으로
+            </Button>
+          </Link>
+          <div className="flex items-center gap-2">
+            <Trophy className="h-8 w-8 text-yellow-500" />
+            <h1 className="text-4xl font-bold text-gray-800">일일 챌린지</h1>
+          </div>
+        </div>
+
+        {/* Stats: 총포인트, 완료한 날, 연속 달성 */}
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">총 포인트</CardTitle>
+              <Award className="h-4 w-4 text-yellow-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{getTotalPoints()}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">완료한 날</CardTitle>
+              <CalendarIcon className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{getCompletedDaysCount()}일</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">연속 달성</CardTitle>
+              <Flame className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">3일</div> {/* 이 부분은 너가 로직 추가 필요 */}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* 오늘 날짜 미션 3개 중 하나 선택 UI */}
+          <div>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <Target className="h-6 w-6 text-blue-500" />
+              오늘의 챌린지 (난이도별 3개 중 1개 선택)
+            </h2>
+
+            {todayChallenges.length === 0 && (
+              <p>오늘의 챌린지가 없습니다.</p>
+            )}
+
+            {todayChallenges.map((challenge) => {
+              const completed = isChallengeCompleted(getTodayDateString(), challenge.id)
+              const isSelected = selectedChallengeId === challenge.id
+
+              return (
+                <Card
+                  key={challenge.id}
+                  className={`mb-4 border-2 ${
+                    isSelected ? "border-blue-500" : "border-transparent"
+                  } hover:shadow-md transition-shadow cursor-pointer`}
+                  onClick={() => selectChallenge(challenge.id)}
+                >
+                  <CardHeader className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">{challenge.title}</CardTitle>
+                      <CardDescription>{challenge.description}</CardDescription>
+                    </div>
+                    <Badge className={getDifficultyColor(challenge.difficulty)}>
+                      {getDifficultyText(challenge.difficulty)}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="flex items-center justify-between">
+                    <div>
+                      <Badge variant="outline">{challenge.points}P</Badge>
+                    </div>
+                    <div>
+                      {completed ? (
+                        <Button disabled className="bg-green-500 cursor-default">
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          완료됨
+                        </Button>
+                      ) : isSelected ? (
+                        <Button onClick={completeSelectedChallenge}>
+                          <Clock className="h-4 w-4 mr-2" />
+                          완료하기
+                        </Button>
+                      ) : (
+                        <Button variant="outline">선택하기</Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
 
-          {/* Loading indicator */}
-          {(isLoading || isChallengeLoading) && (
-              <div className="text-center mb-4">
-                <p className="text-gray-600">챌린지 데이터를 불러오는 중...</p>
-              </div>
-          )}
-
-          {/* Stats */}
-          <div className="grid md:grid-cols-3 gap-4 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">총 포인트</CardTitle>
-                <Award className="h-4 w-4 text-yellow-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{getTotalPoints()}</div>
-              </CardContent>
-            </Card>
+          {/* 달력 */}
+          <div>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <CalendarIcon className="h-6 w-6 text-green-500" />
+              챌린지 달력
+            </h2>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">완료한 날</CardTitle>
-                <CalendarIcon className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{getCompletedDaysCount()}일</div>
-              </CardContent>
-            </Card>
+              <CardContent className="p-6">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  className="rounded-md border"
+                  modifiers={{
+                    completed: (date) => {
+                      const dateString = getDateString(date)
+                      return completions.some(
+                        (c) => c.date === dateString && c.completed
+                      )
+                    },
+                  }}
+                  modifiersStyles={{
+                    completed: {
+                      backgroundColor: "#10b981",
+                      color: "white",
+                      fontWeight: "bold",
+                    },
+                  }}
+                />
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">연속 달성</CardTitle>
-                <Flame className="h-4 w-4 text-orange-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{getConsecutiveDays()}일</div>
-              </CardContent>
-            </Card>
-          </div>
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium mb-2">
+                    {selectedDate.toLocaleDateString("ko-KR", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </h4>
 
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Today's Challenge */}
-            <div>
-              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                <Target className="h-6 w-6 text-blue-500" />
-                오늘의 챌린지
-              </h2>
-
-              {!isTodayCompleted() ? (
-                  <Card className="mb-6">
-                    <CardHeader>
-                      <CardTitle className="text-xl">오늘의 챌린지를 선택하세요</CardTitle>
-                      <CardDescription>
-                        아래 챌린지 중 하나를 선택해서 완료해보세요. 하루에 하나만 완료할 수 있습니다.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3 mb-4">
-                        {todayChallenges.map((challenge) => (
+                  {completions.filter(
+                    (c) =>
+                      c.date === getDateString(selectedDate) &&
+                      c.completed
+                  ).length > 0 ? (
+                    <div className="space-y-2">
+                      <p className="text-sm text-green-600 font-medium">
+                        ✅ 챌린지 완료!
+                      </p>
+                      {completions
+                        .filter(
+                          (c) =>
+                            c.date === getDateString(selectedDate) &&
+                            c.completed
+                        )
+                        .map((completion) => {
+                          const challenge = challenges.find(
+                            (c) => c.id === completion.challengeId
+                          )
+                          return challenge ? (
                             <div
-                                key={challenge.id}
-                                className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                                    selectedChallengeId === challenge.id
-                                        ? "border-blue-500 bg-blue-50"
-                                        : "border-gray-200 hover:border-gray-300"
-                                }`}
-                                onClick={() => setSelectedChallengeId(challenge.id)}
+                              key={completion.challengeId}
+                              className="text-sm text-gray-600"
                             >
-                              <div className="flex items-center justify-between">
-                                <div className="flex-1">
-                                  <h4 className="font-medium">{challenge.title}</h4>
-                                  <p className="text-sm text-gray-600 mt-1">{challenge.description}</p>
-                                  <div className="flex items-center gap-2 mt-2">
-                                    <Badge className={`text-xs ${getDifficultyColor(challenge.difficulty)}`}>
-                                      {getDifficultyText(challenge.difficulty)}
-                                    </Badge>
-                                    <span className="text-xs text-gray-500">{challenge.point}P</span>
-                                  </div>
-                                </div>
-                                <div className="ml-4">
-                                  <div
-                                      className={`w-4 h-4 rounded-full border-2 ${
-                                          selectedChallengeId === challenge.id ? "border-blue-500 bg-blue-500" : "border-gray-300"
-                                      }`}
-                                  />
-                                </div>
-                              </div>
+                              • {challenge.title} (+{challenge.points}P)
                             </div>
-                        ))}
-                      </div>
-
-                      <Button
-                          onClick={completeSelectedChallenge}
-                          disabled={!selectedChallengeId || isCompletingChallenge}
-                          className="w-full"
-                      >
-                        <Clock className="h-4 w-4 mr-2" />
-                        {isCompletingChallenge ? "완료 중..." : "선택한 챌린지 완료하기"}
-                      </Button>
-                    </CardContent>
-                  </Card>
-              ) : (
-                  <Card className="mb-6">
-                    <CardHeader>
-                      <CardTitle className="text-xl">오늘의 챌린지</CardTitle>
-                      <CardDescription>
-                        오늘은 이미 챌린지를 완료했습니다. 내일 새로운 챌린지에 도전해보세요!
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {todayChallenges.map((challenge) => {
-                          const isCompleted = challengeHistory.some(
-                              (h) => h.date === getTodayDateString() && h.challengeId === challenge.id,
-                          )
-
-                          return (
-                              <div
-                                  key={challenge.id}
-                                  className={`p-4 border rounded-lg ${
-                                      isCompleted ? "border-green-200 bg-green-50" : "border-gray-200 bg-gray-50 opacity-60"
-                                  }`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex-1">
-                                    <h4 className="font-medium">{challenge.title}</h4>
-                                    <p className="text-sm text-gray-600 mt-1">{challenge.description}</p>
-                                    <div className="flex items-center gap-2 mt-2">
-                                      <Badge className={`text-xs ${getDifficultyColor(challenge.difficulty)}`}>
-                                        {getDifficultyText(challenge.difficulty)}
-                                      </Badge>
-                                      <span className="text-xs text-gray-500">{challenge.point}P</span>
-                                    </div>
-                                  </div>
-                                  <div className="ml-4">
-                                    {isCompleted ? (
-                                        <div className="flex items-center gap-2">
-                                          <CheckCircle className="h-5 w-5 text-green-500" />
-                                          <span className="text-sm font-medium text-green-600">완료됨</span>
-                                        </div>
-                                    ) : (
-                                        <span className="text-sm text-gray-400">미완료</span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                          )
+                          ) : null
                         })}
-                      </div>
-                    </CardContent>
-                  </Card>
-              )}
-
-              {/* All Available Challenges */}
-              <h3 className="text-xl font-semibold mb-4">사용 가능한 챌린지</h3>
-              <div className="space-y-3">
-                {todayChallenges.map((challenge) => (
-                    <Card key={challenge.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-medium">{challenge.title}</h4>
-                            <p className="text-sm text-gray-600 mt-1">{challenge.description}</p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge className={`text-xs ${getDifficultyColor(challenge.difficulty)}`}>
-                                {getDifficultyText(challenge.difficulty)}
-                              </Badge>
-                              <span className="text-xs text-gray-500">{challenge.point}P</span>
-                            </div>
-                          </div>
-
-                          {completedTodayChallenge?.id === challenge.id && (
-                              <CheckCircle className="h-5 w-5 text-green-500 ml-4" />
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                ))}
-              </div>
-            </div>
-
-            {/* Calendar */}
-            <div>
-              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                <CalendarIcon className="h-6 w-6 text-green-500" />
-                챌린지 달력
-              </h2>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="w-full max-w-md mx-auto">
-                    <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => date && setSelectedDate(date)}
-                        className="rounded-md border-0 w-full"
-                        classNames={{
-                          months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 w-full",
-                          month: "space-y-4 w-full",
-                          caption: "flex justify-center pt-1 relative items-center mb-4",
-                          caption_label: "text-sm font-medium",
-                          nav: "space-x-1 flex items-center",
-                          nav_button:
-                              "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border border-input rounded-md hover:bg-accent hover:text-accent-foreground",
-                          nav_button_previous: "absolute left-1",
-                          nav_button_next: "absolute right-1",
-                          table: "w-full border-collapse space-y-1",
-                          head_row: "flex w-full gap-4",
-                          head_cell: "text-muted-foreground rounded-md w-full font-normal text-[0.8rem] flex-1 text-center",
-                          row: "flex w-full mt-2 gap-4",
-                          cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 flex-1",
-                          day: "h-9 w-full p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-md",
-                          day_selected:
-                              "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                          day_today: "bg-accent text-accent-foreground",
-                          day_outside:
-                              "text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-                          day_disabled: "text-muted-foreground opacity-50",
-                          day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-                          day_hidden: "invisible",
-                        }}
-                        modifiers={{
-                          completed: (date) => {
-                            const dateString = getDateString(date)
-                            return challengeHistory.some((h) => h.date === dateString)
-                          },
-                        }}
-                        modifiersStyles={{
-                          completed: {
-                            backgroundColor: "#10b981",
-                            color: "white",
-                            fontWeight: "bold",
-                          },
-                        }}
-                        components={{
-                          IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
-                          IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
-                        }}
-                    />
-                  </div>
-
-                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-medium mb-2">
-                      {selectedDate.toLocaleDateString("ko-KR", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </h4>
-
-                    {challengeHistory.filter((h) => h.date === getDateString(selectedDate)).length > 0 ? (
-                        <div className="space-y-2">
-                          <p className="text-sm text-green-600 font-medium">✅ 챌린지 완료!</p>
-                          {challengeHistory
-                              .filter((h) => h.date === getDateString(selectedDate))
-                              .map((history) => {
-                                const challenge = todayChallenges.find((c) => c.id === history.challengeId)
-                                return challenge ? (
-                                    <div key={`${history.challengeId}-${history.date}`} className="text-sm text-gray-600">
-                                      • {challenge.title} (+{challenge.point}P)
-                                    </div>
-                                ) : null
-                              })}
-                        </div>
-                    ) : (
-                        <p className="text-sm text-gray-500">이 날은 챌린지를 완료하지 않았습니다.</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">
+                      이 날은 챌린지를 완료하지 않았습니다.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
+    </div>
   )
 }
