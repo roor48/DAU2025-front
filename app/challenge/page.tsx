@@ -526,33 +526,6 @@ export default function ChallengePage() {
                     </CardContent>
                   </Card>
               )}
-
-              {/* All Available Challenges */}
-              <h3 className="text-xl font-semibold mb-4">사용 가능한 챌린지</h3>
-              <div className="space-y-3">
-                {todayChallenges.map((challenge) => (
-                    <Card key={challenge.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-medium">{challenge.title}</h4>
-                            <p className="text-sm text-gray-600 mt-1">{challenge.description}</p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge className={`text-xs ${getDifficultyColor(challenge.difficulty)}`}>
-                                {getDifficultyText(challenge.difficulty)}
-                              </Badge>
-                              <span className="text-xs text-gray-500">{challenge.point}P</span>
-                            </div>
-                          </div>
-
-                          {completedTodayChallenge?.id === challenge.id && (
-                              <CheckCircle className="h-5 w-5 text-green-500 ml-4" />
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                ))}
-              </div>
             </div>
 
             {/* Calendar */}
