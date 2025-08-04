@@ -41,6 +41,11 @@ interface ChallengeHistory {
   challengeId: number
   userId: number
   date: string
+  title: string
+  description: string
+  point: number
+  difficulty: "Easy" | "Medium" | "Hard"
+  category: string
 }
 
 const challenges: Challenge[] = [
@@ -94,7 +99,7 @@ export default function ChallengePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [todayChallenges, setTodayChallenges] = useState<TodayChallenge[]>([])
   const [selectedChallengeId, setSelectedChallengeId] = useState<number | null>(null)
-  const [completedTodayChallenge, setCompletedTodayChallenge] = useState<TodayChallenge | null>(null)
+  const [completedTodayChallenge, setCompletedTodayChallenge] = useState<ChallengeHistory | null>(null)
   const [isChallengeLoading, setIsChallengeLoading] = useState(false)
   const [isCompletingChallenge, setIsCompletingChallenge] = useState(false)
 
@@ -111,11 +116,8 @@ export default function ChallengePage() {
       const today = getTodayDateString()
       const todayCompleted = challengeHistory.find((h: ChallengeHistory) => h.date === today)
       if (todayCompleted) {
-        const completedChallenge = todayChallenges.find((c) => c.id === todayCompleted.challengeId)
-        if (completedChallenge) {
-          setCompletedTodayChallenge(completedChallenge)
-          setSelectedChallengeId(completedChallenge.id)
-        }
+        setCompletedTodayChallenge(todayCompleted)
+        setSelectedChallengeId(todayCompleted.challengeId)
       }
     }
   }, [user, todayChallenges, challengeHistory])
@@ -167,11 +169,8 @@ export default function ChallengePage() {
       const today = getTodayDateString()
       const todayCompleted = historyData.find((h: ChallengeHistory) => h.date === today)
       if (todayCompleted) {
-        const completedChallenge = todayChallenges.find((c) => c.id === todayCompleted.challengeId)
-        if (completedChallenge) {
-          setCompletedTodayChallenge(completedChallenge)
-          setSelectedChallengeId(completedChallenge.id)
-        }
+        setCompletedTodayChallenge(todayCompleted)
+        setSelectedChallengeId(todayCompleted.challengeId)
       }
     } catch (error) {
       console.error("Challenge history fetch error:", error)
@@ -212,10 +211,18 @@ export default function ChallengePage() {
     // 실제 구현에서는 서버에 완료 요청을 보내야 함
     // 여기서는 임시로 로컬 상태만 업데이트
     const today = getTodayDateString()
+    const selectedChallenge = todayChallenges.find((c) => c.id === Number.parseInt(challengeId))
+    if (!selectedChallenge) return
+
     const newHistory: ChallengeHistory = {
       challengeId: Number.parseInt(challengeId),
       userId: user?.id || 0,
       date: today,
+      title: selectedChallenge.title,
+      description: selectedChallenge.description,
+      point: selectedChallenge.point,
+      difficulty: selectedChallenge.difficulty,
+      category: "분리배출", // 기본값
     }
 
     setChallengeHistory((prev) => [
@@ -256,7 +263,6 @@ export default function ChallengePage() {
 
       // 성공적으로 완료되면 히스토리 새로고침
       await refreshAfterCompletion()
-      setCompletedTodayChallenge(selectedChallenge)
 
       console.log("챌린지가 성공적으로 완료되었습니다!")
     } catch (error) {
@@ -270,8 +276,7 @@ export default function ChallengePage() {
 
   const getTotalPoints = () => {
     return challengeHistory.reduce((total, history) => {
-      const challenge = todayChallenges.find((c) => c.id === history.challengeId)
-      return total + (challenge?.point || 0)
+      return total + history.point
     }, 0)
   }
 
@@ -340,286 +345,283 @@ export default function ChallengePage() {
 
   if (!user) {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
-          <Card className="max-w-md">
-            <CardHeader className="text-center">
-              <Trophy className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-              <CardTitle>로그인이 필요합니다</CardTitle>
-              <CardDescription>챌린지에 참여하려면 먼저 로그인해주세요.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href="/">
-                <Button className="w-full">홈으로 돌아가기</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardHeader className="text-center">
+            <Trophy className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+            <CardTitle>로그인이 필요합니다</CardTitle>
+            <CardDescription>챌린지에 참여하려면 먼저 로그인해주세요.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/">
+              <Button className="w-full">홈으로 돌아가기</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
   return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-        <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="flex items-center gap-4 mb-8">
-            <Link href="/">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                홈으로
-              </Button>
-            </Link>
-            <div className="flex items-center gap-2">
-              <Trophy className="h-8 w-8 text-yellow-500" />
-              <h1 className="text-4xl font-bold text-gray-800">일일 챌린지</h1>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <Link href="/">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              홈으로
+            </Button>
+          </Link>
+          <div className="flex items-center gap-2">
+            <Trophy className="h-8 w-8 text-yellow-500" />
+            <h1 className="text-4xl font-bold text-gray-800">일일 챌린지</h1>
           </div>
+        </div>
 
-          {/* Loading indicator */}
-          {(isLoading || isChallengeLoading) && (
-              <div className="text-center mb-4">
-                <p className="text-gray-600">챌린지 데이터를 불러오는 중...</p>
-              </div>
-          )}
-
-          {/* Stats */}
-          <div className="grid md:grid-cols-3 gap-4 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">총 포인트</CardTitle>
-                <Award className="h-4 w-4 text-yellow-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{getTotalPoints()}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">완료한 날</CardTitle>
-                <CalendarIcon className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{getCompletedDaysCount()}일</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">연속 달성</CardTitle>
-                <Flame className="h-4 w-4 text-orange-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{getConsecutiveDays()}일</div>
-              </CardContent>
-            </Card>
+        {/* Loading indicator */}
+        {(isLoading || isChallengeLoading) && (
+          <div className="text-center mb-4">
+            <p className="text-gray-600">챌린지 데이터를 불러오는 중...</p>
           </div>
+        )}
 
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Today's Challenge */}
-            <div>
-              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                <Target className="h-6 w-6 text-blue-500" />
-                오늘의 챌린지
-              </h2>
+        {/* Stats */}
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">총 포인트</CardTitle>
+              <Award className="h-4 w-4 text-yellow-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{getTotalPoints()}</div>
+            </CardContent>
+          </Card>
 
-              {!isTodayCompleted() ? (
-                  <Card className="mb-6">
-                    <CardHeader>
-                      <CardTitle className="text-xl">오늘의 챌린지를 선택하세요</CardTitle>
-                      <CardDescription>
-                        아래 챌린지 중 하나를 선택해서 완료해보세요. 하루에 하나만 완료할 수 있습니다.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3 mb-4">
-                        {todayChallenges.map((challenge) => (
-                            <div
-                                key={challenge.id}
-                                className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                                    selectedChallengeId === challenge.id
-                                        ? "border-blue-500 bg-blue-50"
-                                        : "border-gray-200 hover:border-gray-300"
-                                }`}
-                                onClick={() => setSelectedChallengeId(challenge.id)}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex-1">
-                                  <h4 className="font-medium">{challenge.title}</h4>
-                                  <p className="text-sm text-gray-600 mt-1">{challenge.description}</p>
-                                  <div className="flex items-center gap-2 mt-2">
-                                    <Badge className={`text-xs ${getDifficultyColor(challenge.difficulty)}`}>
-                                      {getDifficultyText(challenge.difficulty)}
-                                    </Badge>
-                                    <span className="text-xs text-gray-500">{challenge.point}P</span>
-                                  </div>
-                                </div>
-                                <div className="ml-4">
-                                  <div
-                                      className={`w-4 h-4 rounded-full border-2 ${
-                                          selectedChallengeId === challenge.id ? "border-blue-500 bg-blue-500" : "border-gray-300"
-                                      }`}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                        ))}
-                      </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">완료한 날</CardTitle>
+              <CalendarIcon className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{getCompletedDaysCount()}일</div>
+            </CardContent>
+          </Card>
 
-                      <Button
-                          onClick={completeSelectedChallenge}
-                          disabled={!selectedChallengeId || isCompletingChallenge}
-                          className="w-full"
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">연속 달성</CardTitle>
+              <Flame className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{getConsecutiveDays()}일</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Today's Challenge */}
+          <div>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <Target className="h-6 w-6 text-blue-500" />
+              오늘의 챌린지
+            </h2>
+
+            {!isTodayCompleted() ? (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="text-xl">오늘의 챌린지를 선택하세요</CardTitle>
+                  <CardDescription>
+                    아래 챌린지 중 하나를 선택해서 완료해보세요. 하루에 하나만 완료할 수 있습니다.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 mb-4">
+                    {todayChallenges.map((challenge) => (
+                      <div
+                        key={challenge.id}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                          selectedChallengeId === challenge.id
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                        onClick={() => setSelectedChallengeId(challenge.id)}
                       >
-                        <Clock className="h-4 w-4 mr-2" />
-                        {isCompletingChallenge ? "완료 중..." : "선택한 챌린지 완료하기"}
-                      </Button>
-                    </CardContent>
-                  </Card>
-              ) : (
-                  <Card className="mb-6">
-                    <CardHeader>
-                      <CardTitle className="text-xl">오늘의 챌린지</CardTitle>
-                      <CardDescription>
-                        오늘은 이미 챌린지를 완료했습니다. 내일 새로운 챌린지에 도전해보세요!
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {todayChallenges.map((challenge) => {
-                          const isCompleted = challengeHistory.some(
-                              (h) => h.date === getTodayDateString() && h.challengeId === challenge.id,
-                          )
-
-                          return (
-                              <div
-                                  key={challenge.id}
-                                  className={`p-4 border rounded-lg ${
-                                      isCompleted ? "border-green-200 bg-green-50" : "border-gray-200 bg-gray-50 opacity-60"
-                                  }`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex-1">
-                                    <h4 className="font-medium">{challenge.title}</h4>
-                                    <p className="text-sm text-gray-600 mt-1">{challenge.description}</p>
-                                    <div className="flex items-center gap-2 mt-2">
-                                      <Badge className={`text-xs ${getDifficultyColor(challenge.difficulty)}`}>
-                                        {getDifficultyText(challenge.difficulty)}
-                                      </Badge>
-                                      <span className="text-xs text-gray-500">{challenge.point}P</span>
-                                    </div>
-                                  </div>
-                                  <div className="ml-4">
-                                    {isCompleted ? (
-                                        <div className="flex items-center gap-2">
-                                          <CheckCircle className="h-5 w-5 text-green-500" />
-                                          <span className="text-sm font-medium text-green-600">완료됨</span>
-                                        </div>
-                                    ) : (
-                                        <span className="text-sm text-gray-400">미완료</span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                          )
-                        })}
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium">{challenge.title}</h4>
+                            <p className="text-sm text-gray-600 mt-1">{challenge.description}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge className={`text-xs ${getDifficultyColor(challenge.difficulty)}`}>
+                                {getDifficultyText(challenge.difficulty)}
+                              </Badge>
+                              <span className="text-xs text-gray-500">{challenge.point}P</span>
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            <div
+                              className={`w-4 h-4 rounded-full border-2 ${
+                                selectedChallengeId === challenge.id ? "border-blue-500 bg-blue-500" : "border-gray-300"
+                              }`}
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-              )}
-            </div>
-
-            {/* Calendar */}
-            <div>
-              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                <CalendarIcon className="h-6 w-6 text-green-500" />
-                챌린지 달력
-              </h2>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="w-full max-w-md mx-auto">
-                    <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => date && setSelectedDate(date)}
-                        className="rounded-md border-0 w-full"
-                        classNames={{
-                          months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 w-full",
-                          month: "space-y-4 w-full",
-                          caption: "flex justify-center pt-1 relative items-center mb-4",
-                          caption_label: "text-sm font-medium",
-                          nav: "space-x-1 flex items-center",
-                          nav_button:
-                              "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border border-input rounded-md hover:bg-accent hover:text-accent-foreground",
-                          nav_button_previous: "absolute left-1",
-                          nav_button_next: "absolute right-1",
-                          table: "w-full border-collapse space-y-1",
-                          head_row: "flex w-full gap-4",
-                          head_cell: "text-muted-foreground rounded-md w-full font-normal text-[0.8rem] flex-1 text-center",
-                          row: "flex w-full mt-2 gap-4",
-                          cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 flex-1",
-                          day: "h-9 w-full p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-md",
-                          day_selected:
-                              "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                          day_today: "bg-accent text-accent-foreground",
-                          day_outside:
-                              "text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-                          day_disabled: "text-muted-foreground opacity-50",
-                          day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-                          day_hidden: "invisible",
-                        }}
-                        modifiers={{
-                          completed: (date) => {
-                            const dateString = getDateString(date)
-                            return challengeHistory.some((h) => h.date === dateString)
-                          },
-                        }}
-                        modifiersStyles={{
-                          completed: {
-                            backgroundColor: "#10b981",
-                            color: "white",
-                            fontWeight: "bold",
-                          },
-                        }}
-                        components={{
-                          IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
-                          IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
-                        }}
-                    />
+                    ))}
                   </div>
 
-                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-medium mb-2">
-                      {selectedDate.toLocaleDateString("ko-KR", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </h4>
+                  <Button
+                    onClick={completeSelectedChallenge}
+                    disabled={!selectedChallengeId || isCompletingChallenge}
+                    className="w-full"
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    {isCompletingChallenge ? "완료 중..." : "선택한 챌린지 완료하기"}
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="text-xl">오늘의 챌린지</CardTitle>
+                  <CardDescription>
+                    오늘은 이미 챌린지를 완료했습니다. 내일 새로운 챌린지에 도전해보세요!
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {todayChallenges.map((challenge) => {
+                      const isCompleted = challengeHistory.some(
+                        (h) => h.date === getTodayDateString() && h.challengeId === challenge.id,
+                      )
 
-                    {challengeHistory.filter((h) => h.date === getDateString(selectedDate)).length > 0 ? (
-                        <div className="space-y-2">
-                          <p className="text-sm text-green-600 font-medium">✅ 챌린지 완료!</p>
-                          {challengeHistory
-                              .filter((h) => h.date === getDateString(selectedDate))
-                              .map((history) => {
-                                const challenge = todayChallenges.find((c) => c.id === history.challengeId)
-                                return challenge ? (
-                                    <div key={`${history.challengeId}-${history.date}`} className="text-sm text-gray-600">
-                                      • {challenge.title} (+{challenge.point}P)
-                                    </div>
-                                ) : null
-                              })}
+                      return (
+                        <div
+                          key={challenge.id}
+                          className={`p-4 border rounded-lg ${
+                            isCompleted ? "border-green-200 bg-green-50" : "border-gray-200 bg-gray-50 opacity-60"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-medium">{challenge.title}</h4>
+                              <p className="text-sm text-gray-600 mt-1">{challenge.description}</p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <Badge className={`text-xs ${getDifficultyColor(challenge.difficulty)}`}>
+                                  {getDifficultyText(challenge.difficulty)}
+                                </Badge>
+                                <span className="text-xs text-gray-500">{challenge.point}P</span>
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              {isCompleted ? (
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle className="h-5 w-5 text-green-500" />
+                                  <span className="text-sm font-medium text-green-600">완료됨</span>
+                                </div>
+                              ) : (
+                                <span className="text-sm text-gray-400">미완료</span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                    ) : (
-                        <p className="text-sm text-gray-500">이 날은 챌린지를 완료하지 않았습니다.</p>
-                    )}
+                      )
+                    })}
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            )}
+          </div>
+
+          {/* Calendar */}
+          <div>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <CalendarIcon className="h-6 w-6 text-green-500" />
+              챌린지 달력
+            </h2>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="w-full max-w-md mx-auto">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    className="rounded-md border-0 w-full"
+                    classNames={{
+                      months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 w-full",
+                      month: "space-y-4 w-full",
+                      caption: "flex justify-center pt-1 relative items-center mb-4",
+                      caption_label: "text-sm font-medium",
+                      nav: "space-x-1 flex items-center",
+                      nav_button:
+                        "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border border-input rounded-md hover:bg-accent hover:text-accent-foreground",
+                      nav_button_previous: "absolute left-1",
+                      nav_button_next: "absolute right-1",
+                      table: "w-full border-collapse space-y-1",
+                      head_row: "flex w-full gap-4",
+                      head_cell: "text-muted-foreground rounded-md w-full font-normal text-[0.8rem] flex-1 text-center",
+                      row: "flex w-full mt-2 gap-4",
+                      cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 flex-1",
+                      day: "h-9 w-full p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-md",
+                      day_selected:
+                        "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                      day_today: "bg-accent text-accent-foreground",
+                      day_outside:
+                        "text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
+                      day_disabled: "text-muted-foreground opacity-50",
+                      day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                      day_hidden: "invisible",
+                    }}
+                    modifiers={{
+                      completed: (date) => {
+                        const dateString = getDateString(date)
+                        return challengeHistory.some((h) => h.date === dateString)
+                      },
+                    }}
+                    modifiersStyles={{
+                      completed: {
+                        backgroundColor: "#10b981",
+                        color: "white",
+                        fontWeight: "bold",
+                      },
+                    }}
+                    components={{
+                      IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
+                      IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+                    }}
+                  />
+                </div>
+
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium mb-2">
+                    {selectedDate.toLocaleDateString("ko-KR", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </h4>
+
+                  {challengeHistory.filter((h) => h.date === getDateString(selectedDate)).length > 0 ? (
+                    <div className="space-y-2">
+                      <p className="text-sm text-green-600 font-medium">✅ 챌린지 완료!</p>
+                      {challengeHistory
+                        .filter((h) => h.date === getDateString(selectedDate))
+                        .map((history) => (
+                          <div key={`${history.challengeId}-${history.date}`} className="text-sm text-gray-600">
+                            • {history.title} (+{history.point}P)
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">이 날은 챌린지를 완료하지 않았습니다.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
+    </div>
   )
 }
