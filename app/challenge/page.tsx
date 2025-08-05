@@ -288,33 +288,34 @@ export default function ChallengePage() {
   const getConsecutiveDays = () => {
     if (challengeHistory.length === 0) return 0
 
-    // 날짜를 정렬하여 연속 날짜 계산
-    const sortedDates = [...new Set(challengeHistory.map((h) => h.date))].sort()
+    // 고유한 날짜들을 추출하고 정렬
+    const uniqueDates = [...new Set(challengeHistory.map((h) => h.date))].sort()
 
-    const consecutiveDays = 0
-    let currentStreak = 0
-    const today = getTodayDateString()
+    if (uniqueDates.length === 0) return 0
 
-    // 오늘부터 역순으로 확인
-    for (let i = 0; i < 100; i++) {
-      // 최대 100일까지만 확인
-      const checkDate = new Date()
-      checkDate.setDate(checkDate.getDate() - i)
-      const checkDateString = getDateString(checkDate)
+    let maxStreak = 1 // 최소 1일은 있으므로
+    let currentStreak = 1
 
-      if (sortedDates.includes(checkDateString)) {
+    // 연속된 날짜들을 확인
+    for (let i = 1; i < uniqueDates.length; i++) {
+      const prevDate = new Date(uniqueDates[i - 1])
+      const currentDate = new Date(uniqueDates[i])
+
+      // 하루 차이인지 확인 (밀리초 단위로 계산)
+      const timeDiff = currentDate.getTime() - prevDate.getTime()
+      const dayDiff = timeDiff / (1000 * 60 * 60 * 24)
+
+      if (dayDiff === 1) {
+        // 연속된 날짜
         currentStreak++
+        maxStreak = Math.max(maxStreak, currentStreak)
       } else {
-        // 오늘이 아닌 날에 빠진 날이 있으면 연속 종료
-        if (i === 0) {
-          // 오늘 완료하지 않았으면 어제부터 확인
-          continue
-        }
-        break
+        // 연속이 끊어짐
+        currentStreak = 1
       }
     }
 
-    return currentStreak
+    return maxStreak
   }
 
   const getDifficultyColor = (difficulty: string) => {
